@@ -5,7 +5,7 @@ document.getElementById("activate").addEventListener('click', () => {
     var strURL = document.URL;
     var strDirtyFolder = document.title.replace(/...Service.Desk...Google.Диск/, "");
     strDirtyFolder = strDirtyFolder.replace(" - Service Desk", "");
-    strDirtyFolder = strDirtyFolder.replace(" – Google Диск", "");
+    strDirtyFolder = strDirtyFolder.replace(/...Google Диск/, "");
     var strTextToCopy = strDirtyFolder+": "+strURL;
 
     var aField = document.createElement("textarea");

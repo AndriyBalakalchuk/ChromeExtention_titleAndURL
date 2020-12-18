@@ -1,11 +1,11 @@
 {
     "manifest_version": 2,
-    "name": "Gdrive - getLink&Folder",
+    "name": "Title and URL copy",
     "version": "1.0.0",
-    "description": "Копировать URL и тайтл к ниму",
+    "description": "Copy curent page title and URL (Копирует тайтл и ссылку на текущую страницу в буфер)",
     "browser_action": {
       "default_icon": "icon.png",
-	    "default_title": "Копировать",
+	    "default_title": "Copy!/Копировать",
 	    "default_popup": "popup.html"
     },
     "background": {
