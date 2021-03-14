@@ -1,0 +1,91 @@
+body{
+    background-color: #323233;
+    width: 240px;
+    height: auto;
+}
+
+.logo_container{
+    width: 240px;
+    height: 50px;
+}
+
+.logo_img{
+    margin-left: 20px;
+}
+
+.buttonsBlock{
+    margin-top: 20px;
+    margin-left: 20px;
+    width: 200px;
+    height: auto;
+}
+
+.my_button{
+    width: 200px;
+    margin-top: 15px;
+    height: 25px;
+    display: block;
+    border: 1px solid #474747;
+    background-color: #2a2a2a;
+    color: #adadad;
+}
+.my_button:hover{
+    background-color: #1d1d1d;
+}
+
+.my_button:active{
+    background-color: #0f0f0f;
+}
+
+
+hr{
+    margin-top: 15px;
+    border: 1px solid #252525;   
+}
+
+.DownloadForm{
+    margin-top: 15px;
+    margin-left: 10px;
+    border: 1px solid #474747;
+    width: 220px;
+    padding: 10px;
+}
+
+.My_lable{
+    color: #adadad;
+    font-size: 8pt;
+    margin: 0pt 0pt 5pt 10pt;
+    width: 200px;
+}
+
+.MyTextarea{
+    background-color: #2a2a2a;
+    border: 1px solid #474747;
+    width: 195px;
+    color: #adadad;
+}
+
+.MyTextarea:focus{
+    background-color: #0f0f0f;
+}
+
+.Progress_bar_container{
+    margin-top: 15px;
+    margin-left: 10px;
+    width: 220px;
+    padding: 10px;
+}
+
+.Progress_bar{
+    width: 200px;
+    background-color: #2a2a2a;
+    border: 1px solid #474747;
+    border-radius: 3px;
+    height: 15px;
+}
+
+.Progress_bar_inner{
+    background-color: #2fabdb;
+    border-radius: 3px;
+    height: 15px;
+}
