@@ -12,6 +12,6 @@
       "scripts": ["main.js"]
     },
     "permissions": [
-      "activeTab", "tabs", "http://*/*", "https://*/*"
+      "activeTab", "tabs", "http://*/*", "https://*/*", "storage"
     ]
   } 

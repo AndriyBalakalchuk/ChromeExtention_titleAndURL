@@ -87,5 +87,15 @@ hr{
 .Progress_bar_inner{
     background-color: #2fabdb;
     border-radius: 3px;
+    color:#adadad;
+    text-align: center;
     height: 15px;
+}
+
+.UserForm{
+    margin-top: 15px;
+    margin-left: -10px;
+    border: 1px solid #474747;
+    width: 200px;
+    padding: 10px;
 }

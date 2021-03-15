@@ -6,50 +6,9 @@ function declarateListeners() {
     //получаем кнопку копирования для ее прослушивания
     var buttonCopy = document.getElementById('copy_url_title');
     if(buttonCopy){
-        buttonCopy.addEventListener('click', ()=>{
-            //закрыть окно расширения
-            window.close();
-            // this.close();     
-            //у нас есть доступ к вкладке хрома потому можно запустить chrome.tabs.executeScript:
-            chrome.tabs.executeScript({
-                code: '(' + copyURLandTitle + ')();' //аргумент тут это строка но function.toString() вернет код функции
-            }, (results) => {
-                //Здесь у нас есть только innerHTML, а не структура DOM.
-                //console.log('Popup script:')
-                //console.log(results[0]);
-            });
-        
-            //функция js которая отработает на выбранной вкладке
-            function copyURLandTitle(){
-                //получаем URL страници 
-                var strURL = document.URL;
-                //получаем тайтл вкладки 
-                var strDirtyFolder = document.title;
-                //пробуем очистить тайтл от гугловского шаблона
-                strDirtyFolder = strDirtyFolder.replace(" - Service Desk", "");
-                strDirtyFolder = strDirtyFolder.replace(/...Google Диск/, "");
-                //собираем строку для копирования
-                var strTextToCopy = strDirtyFolder+": "+strURL;
-                //создать фейк поле для копирования
-                var aField = document.createElement("textarea");
-                var div = document.getElementsByTagName("body")[0];
-                div.appendChild(aField);
-                aField.value = strTextToCopy;
-                aField.select();
-                //копировать содержимое фейк поля и удалить само поле
-                try {
-                    var successful = document.execCommand('copy');
-                    if(successful) {
-                        aField.setAttribute("hidden", true);
-                    }
-                    var msg = successful ? 'successful' : 'unsuccessful';
-                    console.log('Copying text command was ' + msg);
-                } catch (err) {
-                    console.log('Oops, unable to copy');
-                }
-            }
-        });
+        buttonCopy.addEventListener('click', copyManipulations);
     }
+    
     //получаем кнопку формы для скачивания изображений для ее прослушивания
     var buttonShowDownlForm = document.getElementById('showDownload');
     if(buttonShowDownlForm){
@@ -203,7 +162,12 @@ function downloadingFunc(){
 
                 //декларируем внешний\внутренний дивы для прогресса
                 var strProgressBar = "<p class='My_lable'>Downloading, wait...</p><div class='Progress_bar' id='Progress_bar'><div class='Progress_bar_inner' id='Progress_bar_inner'></div></div>";
-                
+                //декларируем Кнопку далее
+                var strNextButton = "<button class='my_button' id='NextDownloads'>Go next batch</button>";
+                //декларируем скрытые текст фиелды для хранения оставшихся изображений
+                var strHiddens = "<textarea id='ClearLinksImages' hidden></textarea><textarea id='ClearNamesImages' hidden></textarea>";
+
+
                 //удаляем форму
                 //получаем блок в который чистим от полей
                 var objGroupDiv = document.getElementById('DownloadForm');
@@ -215,7 +179,7 @@ function downloadingFunc(){
                 var objProgressDiv = document.createElement('div');
                 objProgressDiv.className = 'Progress_bar_container';
                 objProgressDiv.id = 'Progress_bar_container';
-                objProgressDiv.innerHTML = strProgressBar;
+                objProgressDiv.innerHTML = strProgressBar+strNextButton+strHiddens;
 
                 //получаем блок в который вставим поля
                 var objParentDiv = document.getElementById('downloadForm');
@@ -228,14 +192,43 @@ function downloadingFunc(){
         }
 
 
-        //идем по всем чистым ссылкам и названиям и скачиваем ссылки переименовывая их  
-        for (var i=0; i<arrClearedLinks.length; i++) {
-            forceDownload(arrClearedLinks[i], arrClearedNames[i]);
-            document.getElementById('Progress_bar_inner').style.width = (((i+1)/arrClearedLinks.length)*200)+'px';
+        //если ссылок больше 10 то останавливаем и сохраняем остаток в поля
+        if(arrClearedLinks.length > 10){
+            //скачиваем первые 10
+            for (var i=0; i<10; i++) {
+                forceDownload(arrClearedLinks[i], arrClearedNames[i]);
+                document.getElementById('Progress_bar_inner').style.width = (((i+1)/arrClearedLinks.length)*200)+'px';
+                document.getElementById('Progress_bar_inner').innerHTML = (i+1)+'/'+arrClearedLinks.length;
+            }
+            //помещаем остальные в поля 
+            var arrSaveLinks = Array();
+            var arrSaveNames = Array();
+            for (var i=10; i<arrClearedLinks.length; i++) {
+                arrSaveLinks.push(arrClearedLinks[i]);
+                arrSaveNames.push(arrClearedNames[i]);
+            }
+            document.getElementById('ClearLinksImages').value = JSON.stringify( arrSaveLinks );
+            document.getElementById('ClearNamesImages').value = JSON.stringify( arrSaveNames );
+            //подключаем на кнопку функцию "продолжить"
+            var buttonNextDownl = document.getElementById('NextDownloads');
+            if(buttonNextDownl){
+                buttonNextDownl.addEventListener('click', NextDownload);
+            }
+        }else{
+            //если ссылок меньше 10 то скачивем все и меняем кнопку на закончить
+            //идем по ссылкаим - скачиваем
+            for (var i=0; i<arrClearedLinks.length; i++) {
+                forceDownload(arrClearedLinks[i], arrClearedNames[i]);
+                document.getElementById('Progress_bar_inner').style.width = (((i+1)/arrClearedLinks.length)*200)+'px';
+                document.getElementById('Progress_bar_inner').innerHTML = (i+1)+'/'+arrClearedLinks.length;
+            }
+            //меняем кнопку на закончить и присваиваем ей функцию
+            var buttonNextDownl = document.getElementById('NextDownloads');
+            if(buttonNextDownl){
+                buttonNextDownl.innerHTML = "Done! Close Ext.";
+                buttonNextDownl.addEventListener('click', ()=>{window.close();});
+            }
         }
-
-        //закрыть окно расширения
-        // window.close();
     }
 }
 
@@ -256,3 +249,143 @@ function forceDownload(url, fileName){
     }
     xhr.send();
 }
+
+
+//функция скачивания следующих 10ти изображений на джаваскрипте
+function NextDownload(){
+    var objSavedLinks = document.getElementById('ClearLinksImages');
+    var objSavedNames = document.getElementById('ClearNamesImages');
+    if(objSavedLinks && objSavedNames){
+        arrClearedLinks = JSON.parse(objSavedLinks.value); 
+        arrClearedNames = JSON.parse(objSavedNames.value); 
+        //если ссылок больше 10 то останавливаем и сохраняем остаток в поля
+        if(arrClearedLinks.length > 10){
+            //скачиваем первые 10
+            for (var i=0; i<10; i++) {
+                forceDownload(arrClearedLinks[i], arrClearedNames[i]);
+                document.getElementById('Progress_bar_inner').style.width = (((i+1)/arrClearedLinks.length)*200)+'px';
+                document.getElementById('Progress_bar_inner').innerHTML = (i+1)+'/'+arrClearedLinks.length;
+            }
+            //помещаем остальные в поля 
+            var arrSaveLinks = Array();
+            var arrSaveNames = Array();
+            for (var i=10; i<arrClearedLinks.length; i++) {
+                arrSaveLinks.push(arrClearedLinks[i]);
+                arrSaveNames.push(arrClearedNames[i]);
+            }
+            document.getElementById('ClearLinksImages').value = JSON.stringify( arrSaveLinks );
+            document.getElementById('ClearNamesImages').value = JSON.stringify( arrSaveNames );
+            //подключаем на кнопку функцию "продолжить"
+            var buttonNextDownl = document.getElementById('NextDownloads');
+            if(buttonNextDownl){
+                buttonNextDownl.addEventListener('click', NextDownload);
+            }
+        }else{
+            //если ссылок меньше 10 то скачивем все и меняем кнопку на закончить
+            //идем по ссылкаим - скачиваем
+            for (var i=0; i<arrClearedLinks.length; i++) {
+                forceDownload(arrClearedLinks[i], arrClearedNames[i]);
+                document.getElementById('Progress_bar_inner').style.width = (((i+1)/arrClearedLinks.length)*200)+'px';
+                document.getElementById('Progress_bar_inner').innerHTML = (i+1)+'/'+arrClearedLinks.length;
+            }
+            //меняем кнопку на закончить и присваиваем ей функцию
+            var buttonNextDownl = document.getElementById('NextDownloads');
+            if(buttonNextDownl){
+                buttonNextDownl.innerHTML = "Done! Close Ext.";
+                buttonNextDownl.addEventListener('click', ()=>{window.close();});
+            }
+        }
+    }else{
+        alert('No Saved links to continue');
+    }
+}
+
+function copyManipulations(){
+    //получаем кнопку копирования для ее прослушивания
+    var buttonCopy = document.getElementById('copy_url_title');
+    if(buttonCopy){
+        // заменить кнопку на кнопку закрытия если она открытие
+        if(buttonCopy.innerHTML == "Copy URL: Title"){
+            
+            //переписываем кнопке имя
+            buttonCopy.innerHTML = "Copy NOW!";
+
+            //декларируем текстовое поле для коментария от пользователя
+            var strUserInput = "<p class='My_lable'>Update description. Can be empty if not needed.</p><input type='text' class='MyTextarea' id='strUserDescription'>";
+            //декларируем текстовое поле для номера вкладки от пользователя
+            var strSystemInput = "<input type='text' id='strSystem' hidden>";
+
+            //создать елемент для группы
+            var objGroupDiv = document.createElement('div');
+            objGroupDiv.className = 'UserForm';
+            objGroupDiv.id = 'UserForm';
+            objGroupDiv.innerHTML = strUserInput+strSystemInput;
+
+
+            //получаем блок в который вставим поля
+            var objParentDiv = document.getElementById('descriptionForm');
+            if(objParentDiv){
+                objParentDiv.appendChild(objGroupDiv);
+            }else{
+                alert('нету блока для вставки полей');
+            }
+            
+            //сохраняем системные данные по вкладке
+            chrome.tabs.query({ currentWindow: true, highlighted: true }, function (tabs) {
+                document.getElementById('strSystem').value = JSON.stringify(Array(tabs[0].url,tabs[0].title));
+            });
+
+            // назначаем на кнопку само копирование
+            buttonCopy.addEventListener('click', ()=>{
+                var arrSystem = JSON.parse(document.getElementById('strSystem').value);
+                //запрашиваем примечание от юзера
+                var strDescriptionFromUser = document.getElementById('strUserDescription').value;
+                if(strDescriptionFromUser=="" || strDescriptionFromUser==null){strDescriptionFromUser='';}else{strDescriptionFromUser=" ("+strDescriptionFromUser+")";}
+                //закрыть окно расширения
+                window.close();
+                // this.close();     
+                //у нас есть доступ к вкладке хрома потому можно запустить chrome.tabs.executeScript:
+                chrome.tabs.executeScript({
+                    code: '(' + copyURLandTitle(strDescriptionFromUser,arrSystem) + ')();' //аргумент тут это строка но function.toString() вернет код функции
+                }, (results) => {
+                    //Здесь у нас есть только innerHTML, а не структура DOM.
+                    //console.log('Popup script:')
+                    //console.log(results[0]);
+                });
+            
+                //функция js которая отработает на выбранной вкладке
+                function copyURLandTitle(strDescriptionFromUser,arrSystem){
+                    //получаем URL страници 
+                    // var strURL = document.URL;
+                    var strURL = arrSystem[0];
+                    //получаем тайтл вкладки 
+                    // var strDirtyFolder = document.title;
+                    var strDirtyFolder = arrSystem[1];
+                    //пробуем очистить тайтл от гугловского шаблона
+                    strDirtyFolder = strDirtyFolder.replace(" - Service Desk", "");
+                    strDirtyFolder = strDirtyFolder.replace(/...Google Диск/, "");
+                    //собираем строку для копирования
+                    var strTextToCopy = strDirtyFolder+strDescriptionFromUser+": "+strURL;
+                    //создать фейк поле для копирования
+                    var aField = document.createElement("textarea");
+                    var div = document.getElementsByTagName("body")[0];
+                    div.appendChild(aField);
+                    aField.value = strTextToCopy;
+                    aField.select();
+                    //копировать содержимое фейк поля и удалить само поле
+                    try {
+                        var successful = document.execCommand('copy');
+                        if(successful) {
+                            aField.setAttribute("hidden", true);
+                        }
+                        var msg = successful ? 'successful' : 'unsuccessful';
+                        console.log('Copying text command was ' + msg);
+                    } catch (err) {
+                        console.log('Oops, unable to copy');
+                    }
+                }
+            });
+        }
+    }
+}
+
