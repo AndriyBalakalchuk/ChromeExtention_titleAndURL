@@ -365,7 +365,7 @@ function copyManipulations(){
                     strDirtyFolder = strDirtyFolder.replace(" - Service Desk", "");
                     strDirtyFolder = strDirtyFolder.replace(/...Google Диск/, "");
                     //собираем строку для копирования
-                    var strTextToCopy = strDirtyFolder+strDescriptionFromUser+": "+strURL;
+                    var strTextToCopy = strDirtyFolder+strDescriptionFromUser+": \n"+strURL;
                     //создать фейк поле для копирования
                     var aField = document.createElement("textarea");
                     var div = document.getElementsByTagName("body")[0];
