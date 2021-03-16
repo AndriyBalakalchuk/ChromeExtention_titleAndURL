@@ -9,7 +9,7 @@
 	    "default_popup": "popup.html"
     },
     "background": {
-      "scripts": ["main.js"]
+      "scripts": ["jquery.min.js", "main.js"]
     },
     "permissions": [
       "activeTab", "tabs", "http://*/*", "https://*/*", "storage"

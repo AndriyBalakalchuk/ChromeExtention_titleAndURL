@@ -99,3 +99,20 @@ hr{
     width: 200px;
     padding: 10px;
 }
+
+.imagePr{
+    width: 200px; 
+    text-align: center;
+}
+
+.myImage{
+    width: 80px; 
+}
+
+.imageDescr{
+    width: 200px; 
+    font-size: 4pt;
+    text-align: center;
+    color:#adadad;
+}
+

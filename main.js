@@ -8,6 +8,12 @@ function declarateListeners() {
     if(buttonCopy){
         buttonCopy.addEventListener('click', copyManipulations);
     }
+
+    //получаем кнопку формы для заливки картинок на ibb.co
+    var buttonShowUplForm = document.getElementById('ibbUploadButton');
+    if(buttonShowUplForm){
+        buttonShowUplForm.addEventListener('click', showUplForm);
+    }
     
     //получаем кнопку формы для скачивания изображений для ее прослушивания
     var buttonShowDownlForm = document.getElementById('showDownload');
@@ -306,6 +312,7 @@ function NextDownload(){
     }
 }
 
+//копирование тайтла открытой вкладки и ее url
 function copyManipulations(){
     //получаем кнопку копирования для ее прослушивания
     var buttonCopy = document.getElementById('copy_url_title');
@@ -395,3 +402,107 @@ function copyManipulations(){
     }
 }
 
+//загрузка изображений на ibb.co и возврат их ссылок
+function showUplForm(){
+    //получаем кнопку открывшую окно для ее прослушивания
+    var buttonShowClose = document.getElementById('ibbUploadButton');
+    if(buttonShowClose){
+        // заменить кнопку на кнопку закрытия если она открытие
+        if(buttonShowClose.innerHTML == "Upload Images on ibb.co"){
+            //переписываем кнопке имя
+            buttonShowClose.innerHTML = "Close |X|";
+
+            //декларируем input для выбора фоток
+            var strImagesInput = "<p class='My_lable'>Select images</p><input type='file' class='MyTextarea' id='objFiles' name='objFiles' accept='image/*' multiple>";
+            //декларируем див для превьюх
+            var strImagesPreviev = "<div class='MyPrevievs' id='objPrevievs'></div>";
+            //декларируем кнопку "загрузить"
+            var strButtonUpload = "<button class='my_button' id='startUpload'>Upload images</button>";
+
+            //создать елемент для группы
+            var objGroupDiv = document.createElement('div');
+            objGroupDiv.className = 'UserForm';
+            objGroupDiv.id = 'UploadForm';
+            objGroupDiv.innerHTML = strImagesInput+strImagesPreviev+strButtonUpload;
+
+
+            //получаем блок в который вставим поля
+            var objParentDiv = document.getElementById('ibbUploadForm');
+            if(objParentDiv){
+                objParentDiv.appendChild(objGroupDiv);
+            }else{
+                alert('нету блока для вставки полей');
+            }
+        }else{// заменить кнопку на кнопку закрытия если она открытие
+            //переписываем кнопке имя
+            buttonShowClose.innerHTML = "Upload Images on ibb.co";
+            //удаляем форму
+            //получаем блок в который чистим от полей
+            var objGroupDiv = document.getElementById('UploadForm');
+            if(objGroupDiv){
+                objGroupDiv.remove();
+            }
+        }
+        //получаем кнопку загрузки изображениц если она есть для ее прослушивания
+        var buttonStartUpload = document.getElementById('startUpload');
+        if(buttonStartUpload){
+            buttonStartUpload.addEventListener('click', uploadingFunc);
+        }
+    }
+}
+
+//функция которая грузит изображения на сервер и возвращает результатом ссылки
+function uploadingFunc(){    
+    // ..получаем название выбранных изображений
+    var objFilesArr = document.getElementById('objFiles').files;
+    var objImage = objFilesArr[0];
+    if(objImage != '' && objImage != undefined){//если выбрано фото
+        //удалить поле выбора и кнопку загрузки
+        document.getElementById("objFiles").remove();
+        document.getElementById("startUpload").remove();
+    }else{
+        alert("Please select images");
+    }
+
+
+    while (objImage != '' && objImage != undefined) {//если выбрано фото
+        if(i == undefined){var i=0;}
+
+        //создаем обьект ридера
+        var reader  = new FileReader();
+        //считывем фотку в ридер
+        reader.readAsDataURL(objImage);
+        //обрабатываем картинку и добавляем ее в массив 
+        reader.onloadend = function () {
+            //превью картинки
+            document.getElementById("objPrevievs").innerHTML+='<div class="imagePr"><img class="myImage" src="'+reader.result+'" /></div>';
+        }
+
+        //старт загрузки изображения
+        //создаем виртуальную форму
+        var objForm = new FormData();
+        //вкладываем в нее изображение
+        objForm.append("image", objImage);
+        //настройки для формы
+        var objSettings = {
+        "url": "https://api.imgbb.com/1/upload?key=54a35eba9688303736f7366aea5a3507",
+        "method": "POST",
+        "timeout": 0,
+        "processData": false,
+        "mimeType": "multipart/form-data",
+        "contentType": false,
+        "data": objForm
+        };
+        //отправка формы и сохранение ссылки из ответа
+        $.ajax(objSettings).done(function (response) {
+            //ссылка на картинку
+            document.getElementById("objPrevievs").innerHTML+='<div class="imageDescr" id="link_'+i+'">'+JSON.parse(response).data.url+'</div>';
+        });
+
+
+        i=i+1;
+        if(i<=objFilesArr.length){
+            objImage = objFilesArr[i];
+        }
+    }
+}
