@@ -447,6 +447,7 @@ function showUplForm(){
         var buttonStartUpload = document.getElementById('startUpload');
         if(buttonStartUpload){
             buttonStartUpload.addEventListener('click', uploadingFunc);
+            document.querySelector('#objFiles').addEventListener("change", previewImages);
         }
     }
 }
@@ -464,19 +465,8 @@ function uploadingFunc(){
         alert("Please select images");
     }
 
-
     while (objImage != '' && objImage != undefined) {//если выбрано фото
         if(i == undefined){var i=0;}
-
-        //создаем обьект ридера
-        var reader  = new FileReader();
-        //считывем фотку в ридер
-        reader.readAsDataURL(objImage);
-        //обрабатываем картинку и добавляем ее в массив 
-        reader.onloadend = function () {
-            //превью картинки
-            document.getElementById("objPrevievs").innerHTML+='<div class="imagePr"><img class="myImage" src="'+reader.result+'" /></div>';
-        }
 
         //старт загрузки изображения
         //создаем виртуальную форму
@@ -506,3 +496,38 @@ function uploadingFunc(){
         }
     }
 }
+
+//Функция предпросмотра выбранных изображений
+function previewImages() {
+    //выбираем контейнер для привьюх по id
+    var objPreviewBox = document.querySelector('#objPrevievs');
+    //чистим блок для привьюх
+    objPreviewBox.innerHTML = "";
+    // для каждой выбранной картинки вызываем функцию
+    if (this.files) {
+      [].forEach.call(this.files, readAndPreview);
+    }
+  
+    //функция которая на файл ридере делает привьюхи
+    function readAndPreview(file) {
+  
+      // проверяем что бы формат соответствовал
+      if (!/\.(jpe?g|png|gif)$/i.test(file.name)) {
+        return alert(file.name + " is not an image");
+      } // else...
+      
+      var reader = new FileReader();
+      
+      reader.addEventListener("load", function() {
+        var image = new Image();
+        image.width = 100;
+        image.title  = file.name;
+        image.src    = this.result;
+        objPreviewBox.appendChild(image);
+      });
+      
+      reader.readAsDataURL(file);
+    }
+}
+  
+ 
