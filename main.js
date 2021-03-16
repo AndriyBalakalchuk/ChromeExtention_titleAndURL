@@ -201,6 +201,8 @@ function downloadingFunc(){
                 document.getElementById('Progress_bar_inner').innerHTML = (i+1)+'/'+arrClearedLinks.length;
             }
             //помещаем остальные в поля 
+            document.getElementById('ClearLinksImages').class = arrClearedLinks.length;
+            document.getElementById('ClearNamesImages').class = i+1;
             var arrSaveLinks = Array();
             var arrSaveNames = Array();
             for (var i=10; i<arrClearedLinks.length; i++) {
@@ -258,15 +260,19 @@ function NextDownload(){
     if(objSavedLinks && objSavedNames){
         arrClearedLinks = JSON.parse(objSavedLinks.value); 
         arrClearedNames = JSON.parse(objSavedNames.value); 
+        intTotalImages = document.getElementById('ClearLinksImages').class*1;
+        incDoneImages = document.getElementById('ClearNamesImages').class*1;
         //если ссылок больше 10 то останавливаем и сохраняем остаток в поля
         if(arrClearedLinks.length > 10){
             //скачиваем первые 10
             for (var i=0; i<10; i++) {
                 forceDownload(arrClearedLinks[i], arrClearedNames[i]);
-                document.getElementById('Progress_bar_inner').style.width = (((i+1)/arrClearedLinks.length)*200)+'px';
-                document.getElementById('Progress_bar_inner').innerHTML = (i+1)+'/'+arrClearedLinks.length;
+                document.getElementById('Progress_bar_inner').style.width = (((incDoneImages+i)/intTotalImages)*200)+'px';
+                document.getElementById('Progress_bar_inner').innerHTML = (incDoneImages+i)+'/'+intTotalImages;
             }
             //помещаем остальные в поля 
+            document.getElementById('ClearLinksImages').class = intTotalImages;
+            document.getElementById('ClearNamesImages').class = incDoneImages+i;
             var arrSaveLinks = Array();
             var arrSaveNames = Array();
             for (var i=10; i<arrClearedLinks.length; i++) {
@@ -285,8 +291,8 @@ function NextDownload(){
             //идем по ссылкаим - скачиваем
             for (var i=0; i<arrClearedLinks.length; i++) {
                 forceDownload(arrClearedLinks[i], arrClearedNames[i]);
-                document.getElementById('Progress_bar_inner').style.width = (((i+1)/arrClearedLinks.length)*200)+'px';
-                document.getElementById('Progress_bar_inner').innerHTML = (i+1)+'/'+arrClearedLinks.length;
+                document.getElementById('Progress_bar_inner').style.width = (((incDoneImages+i)/intTotalImages)*200)+'px';
+                document.getElementById('Progress_bar_inner').innerHTML = (incDoneImages+i)+'/'+intTotalImages;
             }
             //меняем кнопку на закончить и присваиваем ей функцию
             var buttonNextDownl = document.getElementById('NextDownloads');
@@ -311,7 +317,7 @@ function copyManipulations(){
             buttonCopy.innerHTML = "Copy NOW!";
 
             //декларируем текстовое поле для коментария от пользователя
-            var strUserInput = "<p class='My_lable'>Update description. Can be empty if not needed.</p><input type='text' class='MyTextarea' id='strUserDescription'>";
+            var strUserInput = "<p class='My_lable'>Update description. Can be empty if not needed.</p><textarea class='MyTextarea' id='strUserDescription'></textarea>";
             //декларируем текстовое поле для номера вкладки от пользователя
             var strSystemInput = "<input type='text' id='strSystem' hidden>";
 
