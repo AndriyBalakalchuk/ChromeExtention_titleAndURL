@@ -20,6 +20,12 @@ function declarateListeners() {
     if(buttonShowDownlForm){
         buttonShowDownlForm.addEventListener('click', showDownForm);
     }
+
+    //получаем кнопку скачивания доступного с Ремув БГ
+    var buttonRemDownload = document.getElementById('remDownloadGo');
+    if(buttonRemDownload){
+        buttonRemDownload.addEventListener('click', remDownloadGo);
+    }
 }
 
 // открыть окно для встаки линков и названий
@@ -530,4 +536,72 @@ function previewImages() {
     }
 }
   
+
+//скачать все что конвертировалось на странице ремув БГ
+function remDownloadGo(){
+    //получаем кнопку копирования для ее прослушивания
+    var buttonRemDownload = document.getElementById('remDownloadGo');
+    if(buttonRemDownload){
+        // заменить кнопку на кнопку закрытия если она открытие
+        if(buttonRemDownload.innerHTML == "Download RemBG"){
+            //у нас есть доступ к вкладке хрома потому можно запустить chrome.tabs.executeScript:
+            chrome.tabs.executeScript({
+                code: '(' + startDownloading + ')();' //аргумент тут это строка но function.toString() вернет код функции
+            }, (results) => {
+                //Здесь у нас есть только innerHTML, а не структура DOM.
+                // console.log('Popup script:')
+                // console.log(results[0]);
+            });
+            //закрыть окно расширения
+            window.close();
+
+            function startDownloading() {
+                //You can play with your DOM here or check URL against your regex
+                // var regRegEx = new RegExp(/(https:\/\/\S*-removebg-preview\.png)/g);
+                var regRegEx = new RegExp(/(https:\/\/\S*\.png)/g);
+                var strContent = document.body.innerHTML;
+                var arrResult = strContent.match(regRegEx);
+
+                var current;
+                var length = arrResult.length;
+                var unique = [];
+                for(var i = 0; i < length; i++) {
+                    current = arrResult[i];
+                    if (!~unique.indexOf(current)) {
+                    unique.push(current);
+                    }
+                }
+                arrResult = unique;
+
+                var strResult = '';
+                var strLincks = '';
+                for(var i = 0; i < arrResult.length; i++){
+                    if(i == 0){
+                        strResult = '<a href="'+arrResult[i]+'" target="_blanck"><img height="50px"src="'+arrResult[i]+'"></a>';
+                        strLincks = arrResult[i]+"<br>";
+                    }else{
+                        strResult += '<a href="'+arrResult[i]+'" target="_blanck"><img height="50px"src="'+arrResult[i]+'"></a>';
+                        strLincks += arrResult[i]+"<br>";
+                    }
+                }
+
+                if(strResult==""){strResult=".png изображения не найдены";}
+
+                strResult+="<br>"+strLincks;
+
+                //создать елемент для группы
+                var objGroupDiv = document.createElement('div');
+                objGroupDiv.id = 'UserForm1122';
+                objGroupDiv.innerHTML = "<div style='position: fixed;z-index: 1;padding-top: 100px;left: 0;top: 0;width: 100%;height: 100%;overflow: auto;background-color: rgb(0,0,0);background-color: rgba(0,0,0,0.4);'><div style='background-color: #fefefe;margin: auto;padding: 20px;border: 1px solid #888;width: 80%;text-align: center;'>"+strResult+"</div></div>";
+                objBody = document.body;
+                objBody.appendChild(objGroupDiv);
+
+                // console.log('Tab script:');
+                // console.log(arrResult);
+                return document.body.innerHTML;
+            }
+        }
+    }
+}
+
  
