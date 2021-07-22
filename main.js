@@ -558,7 +558,7 @@ function remDownloadGo(){
             function startDownloading() {
                 //You can play with your DOM here or check URL against your regex
                 // var regRegEx = new RegExp(/(https:\/\/\S*-removebg-preview\.png)/g);
-                var regRegEx = new RegExp(/(https:\/\/\S*\.png)/g);
+                var regRegEx = new RegExp(/(https?:\/\/\S*\.png)/g);
                 var strContent = document.body.innerHTML;
                 var arrResult = strContent.match(regRegEx);
 
