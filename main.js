@@ -141,7 +141,10 @@ function downloadingFunc(){
                         }else if(arrNames[i].match(strRegEx)[0] != strFormat){arrNames[i] = arrNames[i]+strFormat;}
                         arrClearedNames.push(arrNames[i]);
                     }else{ //имени нету - получаем его из файла
-                        arrClearedNames.push(arrLinks[i].match(strNameRegEx)[0]);
+                        var strFileNameFromLink = arrLinks[i].match(strNameRegEx)[0];
+                        //если файл содержит -removebg-preview то заменить на пустоту
+                        strFileNameFromLink = strFileNameFromLink.replace(/-removebg-preview/,"");
+                        arrClearedNames.push(strFileNameFromLink);
                     }
                 }
             }
@@ -156,7 +159,10 @@ function downloadingFunc(){
                     if(!strName.match(strRegEx) || strName.match(strRegEx)[0] != strFormat){strName = strName+strFormat;}
                     forceDownload(strLink, strName)
                 }else{ //имени нету - получаем его из файла
-                    forceDownload(strLink, strLink.match(strNameRegEx)[0])
+                    var strFileNameFromLink = strLink.match(strNameRegEx)[0];
+                    //если файл содержит -removebg-preview то заменить на пустоту
+                    strFileNameFromLink = strFileNameFromLink.replace(/-removebg-preview/,"");
+                    forceDownload(strLink, strFileNameFromLink)
                 }
             }else{ //ссылка не верна
                 alert("Incorrect link, supported links ended on .jpg, .jpeg, .png, .gif");
