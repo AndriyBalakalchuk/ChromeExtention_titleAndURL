@@ -362,24 +362,24 @@ function copyManipulations(){
 
             // назначаем на кнопку само копирование
             buttonCopy.addEventListener('click', ()=>{
-                var arrSystem = JSON.parse(document.getElementById('strSystem').value);
                 //запрашиваем примечание от юзера
                 var strDescriptionFromUser = document.getElementById('strUserDescription').value;
-                if(strDescriptionFromUser=="" || strDescriptionFromUser==null){strDescriptionFromUser='';}else{strDescriptionFromUser=" ("+strDescriptionFromUser+")";}
+                if(strDescriptionFromUser=="" || strDescriptionFromUser==null){strDescriptionFromUser='';}else{strDescriptionFromUser=" ("+strDescriptionFromUser.replace(/\n/gm, "★")+")";}
                 //закрыть окно расширения
                 window.close();
                 // this.close();     
                 //у нас есть доступ к вкладке хрома потому можно запустить chrome.tabs.executeScript:
                 chrome.tabs.executeScript({
-                    code: '(' + copyURLandTitle(strDescriptionFromUser,arrSystem) + ')();' //аргумент тут это строка но function.toString() вернет код функции
+                    code: `${copyURLandTitle.toString()};copyURLandTitle("${strDescriptionFromUser}",'${document.getElementById('strSystem').value}');`,
                 }, (results) => {
                     //Здесь у нас есть только innerHTML, а не структура DOM.
-                    //console.log('Popup script:')
+                    // console.log('Popup script:')
                     //console.log(results[0]);
                 });
             
                 //функция js которая отработает на выбранной вкладке
-                function copyURLandTitle(strDescriptionFromUser,arrSystem){
+                function copyURLandTitle(strDescriptionFromUser,strSystem){
+                    var arrSystem = JSON.parse(strSystem);
                     //получаем URL страници 
                     // var strURL = document.URL;
                     var strURL = arrSystem[0];
@@ -390,7 +390,7 @@ function copyManipulations(){
                     strDirtyFolder = strDirtyFolder.replace(" - Service Desk", "");
                     strDirtyFolder = strDirtyFolder.replace(/...Google Диск/, "");
                     //собираем строку для копирования
-                    var strTextToCopy = strDirtyFolder+strDescriptionFromUser+": \n"+strURL;
+                    var strTextToCopy = strDirtyFolder+strDescriptionFromUser.replace(/★/gm, "\n")+": \n"+strURL;
                     //создать фейк поле для копирования
                     var aField = document.createElement("textarea");
                     var div = document.getElementsByTagName("body")[0];
