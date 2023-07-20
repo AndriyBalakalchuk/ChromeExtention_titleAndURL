@@ -82,7 +82,7 @@ hr{
 
 .Progress_bar_container{
     margin-top: 15px;
-    margin-left: 10px;
+    margin-left: -10px;
     width: 220px;
     padding: 10px;
 }
