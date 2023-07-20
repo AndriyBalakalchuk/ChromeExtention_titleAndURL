@@ -45,10 +45,14 @@ hr{
 
 .DownloadForm{
     margin-top: 15px;
-    margin-left: 10px;
+    margin-left: -10px;
     border: 1px solid #474747;
     width: 200px;
     padding: 10px;
+}
+
+.DownloadForm, a{
+    color: wheat;
 }
 
 .My_lable{
@@ -61,6 +65,13 @@ hr{
 .MyTextarea{
     background-color: #2a2a2a;
     border: 1px solid #474747;
+    width: 195px;
+    color: #adadad;
+}
+
+.invalid{
+    background-color: #c15d5d;
+    border: 1px solid #410c0c;
     width: 195px;
     color: #adadad;
 }

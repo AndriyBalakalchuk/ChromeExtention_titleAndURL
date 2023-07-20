@@ -1,17 +1,27 @@
 {
-    "manifest_version": 2,
+    "manifest_version": 3,
     "name": "BVStud.io tools",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Copy curent page title and URL (Копирует тайтл и ссылку на текущую страницу в буфер), Also, adds a possibility to batch download images by adding names for them (Также добавлена возможность пакетной загрузки изображений, добавляя для них имена.)",
-    "browser_action": {
+    "action": {
       "default_icon": "icon.png",
 	    "default_title": "BVStud.io tools",
 	    "default_popup": "popup.html"
     },
-    "background": {
-      "scripts": ["jquery.min.js", "main.js"]
-    },
     "permissions": [
-      "activeTab", "tabs", "http://*/*", "https://*/*", "storage"
+      "activeTab",
+      "tabs",
+      "storage",
+      "scripting"
+    ],
+    "optional_permissions": [
+      "topSites"
+    ],
+    "host_permissions": [
+      "https://www.developer.chrome.com/*"
+    ],
+    "optional_host_permissions":[
+      "https://*/*", 
+      "http://*/*" 
     ]
   } 

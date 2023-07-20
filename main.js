@@ -1,8 +1,24 @@
 // дожидаемся загрузки документа и запускаем фенкцию декларирования слушателей
 document.addEventListener("DOMContentLoaded", declarateListeners);
 
+//декларируем обьект текущей вкладки
+let objActiveTab;
+//обект настроек пользователя
+let objUserSettings = {};
+
+//получить айди текущей вкладки
+async function getCurrentTab() {
+    let queryOptions = { active: true, lastFocusedWindow: true };
+    // `tab` will either be a `tabs.Tab` instance or `undefined`.
+    let [tab] = await chrome.tabs.query(queryOptions);
+    objActiveTab = tab;
+}
+
 //функция присваивает кнопкам слушателей
 function declarateListeners() {
+    //запрос на пареметри текущей вкладки
+    getCurrentTab()
+
     //получаем кнопку копирования для ее прослушивания
     var buttonCopy = document.getElementById('copy_url_title');
     if(buttonCopy){
@@ -46,7 +62,7 @@ function showDownForm(){
             var strButtonDownload = "<button class='my_button' id='startDownload'>Download all images</button>";
 
             //создать елемент для группы
-            var objGroupDiv = document.createElement('div');
+            let objGroupDiv = document.createElement('div');
             objGroupDiv.className = 'DownloadForm';
             objGroupDiv.id = 'DownloadForm';
             objGroupDiv.innerHTML = strTextAreaLinks+strTextAreaNames+strButtonDownload;
@@ -64,7 +80,7 @@ function showDownForm(){
             buttonShowDownlForm.innerHTML = "Download form!";
             //удаляем форму
             //получаем блок в который чистим от полей
-            var objGroupDiv = document.getElementById('DownloadForm');
+            let objGroupDiv = document.getElementById('DownloadForm');
             if(objGroupDiv){
                 objGroupDiv.remove();
             }
@@ -188,7 +204,7 @@ function downloadingFunc(){
 
                 //удаляем форму
                 //получаем блок в который чистим от полей
-                var objGroupDiv = document.getElementById('DownloadForm');
+                let objGroupDiv = document.getElementById('DownloadForm');
                 if(objGroupDiv){
                     objGroupDiv.remove();
                 }
@@ -341,7 +357,7 @@ function copyManipulations(){
             var strSystemInput = "<input type='text' id='strSystem' hidden>";
 
             //создать елемент для группы
-            var objGroupDiv = document.createElement('div');
+            let objGroupDiv = document.createElement('div');
             objGroupDiv.className = 'UserForm';
             objGroupDiv.id = 'UserForm';
             objGroupDiv.innerHTML = strUserInput+strSystemInput;
@@ -367,14 +383,12 @@ function copyManipulations(){
                 if(strDescriptionFromUser=="" || strDescriptionFromUser==null){strDescriptionFromUser='';}else{strDescriptionFromUser=" ("+strDescriptionFromUser.replace(/\n/gm, "★")+")";}
                 //закрыть окно расширения
                 window.close();
-                // this.close();     
-                //у нас есть доступ к вкладке хрома потому можно запустить chrome.tabs.executeScript:
-                chrome.tabs.executeScript({
-                    code: `${copyURLandTitle.toString()};copyURLandTitle("${strDescriptionFromUser}",'${document.getElementById('strSystem').value}');`,
-                }, (results) => {
-                    //Здесь у нас есть только innerHTML, а не структура DOM.
-                    // console.log('Popup script:')
-                    //console.log(results[0]);
+
+                //у нас есть доступ к вкладке хрома потому можно запустить chrome.scripting.executeScript:
+                chrome.scripting.executeScript({
+                    target : {tabId : objActiveTab.id},
+                    func : copyURLandTitle,
+                    args : [strDescriptionFromUser,document.getElementById('strSystem').value],
                 });
             
                 //функция js которая отработает на выбранной вкладке
@@ -417,51 +431,145 @@ function copyManipulations(){
 //загрузка изображений на ibb.co и возврат их ссылок
 function showUplForm(){
     //получаем кнопку открывшую окно для ее прослушивания
-    var buttonShowClose = document.getElementById('ibbUploadButton');
-    if(buttonShowClose){
-        // заменить кнопку на кнопку закрытия если она открытие
-        if(buttonShowClose.innerHTML == "Upload Images on ibb.co"){
-            //переписываем кнопке имя
-            buttonShowClose.innerHTML = "Close |X|";
+    let buttonShowClose = document.getElementById('ibbUploadButton');
+    //получить настройки пользователя из хранилища синхронизации
+    chrome.storage.sync.get("BVtoolsUserSettings", function (obj) {
+        if(obj.BVtoolsUserSettings===undefined){
+            //нет апи ключа
+            //ключ ари для ibb не указан юзером - нужно заросить и сохранить
+            if(buttonShowClose.innerHTML == "Upload Images on ibb.co"){
+                //заменить кнопку на кнопку закрытия если она открытие
+                //переписываем кнопке имя
+                buttonShowClose.innerHTML = "Close API Key Form |X|";
+                //декларируем текстовое поле для ввода апи ключа 
+                let strTextAreaApiKey = "<p class='My_lable'>Please go to <a href='https://api.imgbb.com/' target='_blank'>api.imgbb.com</a> and register/login at your accaount, than copy Api Key and paste it to the field below, than push Save Api Key.</p><textarea class='MyTextarea' id='IbbApiKey'></textarea>";
+                //декларируем кнопку "сохранить"
+                let strButtonSave = "<button class='my_button' id='SaveApiKey'>Save Api Key</button>";
+            
+            
+                //создать елемент для группы
+                let objGroupDiv = document.createElement('div');
+                objGroupDiv.className = 'DownloadForm';
+                objGroupDiv.id = 'ibbUploadForm-container';
+                objGroupDiv.innerHTML = strTextAreaApiKey+strButtonSave;
 
-            //декларируем input для выбора фоток
-            var strImagesInput = "<p class='My_lable'>Select images</p><input type='file' class='MyTextarea' id='objFiles' name='objFiles' accept='image/*' multiple>";
-            //декларируем див для превьюх
-            var strImagesPreviev = "<div class='MyPrevievs' id='objPrevievs'></div>";
-            //декларируем кнопку "загрузить"
-            var strButtonUpload = "<button class='my_button' id='startUpload'>Upload images</button>";
-
-            //создать елемент для группы
-            var objGroupDiv = document.createElement('div');
-            objGroupDiv.className = 'UserForm';
-            objGroupDiv.id = 'UploadForm';
-            objGroupDiv.innerHTML = strImagesInput+strImagesPreviev+strButtonUpload;
-
-
-            //получаем блок в который вставим поля
-            var objParentDiv = document.getElementById('ibbUploadForm');
-            if(objParentDiv){
-                objParentDiv.appendChild(objGroupDiv);
-            }else{
-                alert('нету блока для вставки полей');
+                //получаем блок в который вставим поля
+                var objParentDiv = document.getElementById('ibbUploadForm');
+                if(objParentDiv){
+                    objParentDiv.appendChild(objGroupDiv);
+                }else{
+                    alert('нету блока для вставки полей');
+                }
+            
+                //получаем кнопку скачивания если она есть для ее прослушивания
+                let objButtonSave = document.getElementById('SaveApiKey');
+                if(objButtonSave){
+                    objButtonSave.addEventListener('click', ()=>{
+                        //нажата кнопка сохранить ключ
+                        let objApiKey = document.getElementById('IbbApiKey');
+                        if(objApiKey){
+                            if(objApiKey.value!==''){
+                                //ключ наверно правильний
+                                //сохранить ключ в облако
+                                objUserSettings = {"strIbbApiKey":objApiKey.value};
+                                chrome.storage.sync.set({ "BVtoolsUserSettings" : JSON.stringify(objUserSettings)}, function() {
+                                    if (chrome.runtime.error) {
+                                        console.log("Runtime error.");
+                                    }
+                                });
+                                //пробросить пользователя в интерфейс загрузки фото по новому ключу
+                                //закрыть окно расширения
+                                window.close();
+                            }else{
+                                // неверный ключ
+                                if(!objApiKey.classList.contains("invalid")){
+                                    objApiKey.classList.add("invalid");
+                                }
+                            }
+                        }
+                    });
+                }
+            }else{ //если нажата кнопка "закрыть форму"
+                //переписываем кнопке имя
+                buttonShowClose.innerHTML = "Upload Images on ibb.co";
+                //получаем блок в который чистим от полей
+                let objGroupDiv = document.getElementById('ibbUploadForm-container');
+                //удаляем форму
+                if(objGroupDiv){
+                    objGroupDiv.remove();
+                }
             }
-        }else{// заменить кнопку на кнопку закрытия если она открытие
-            //переписываем кнопке имя
-            buttonShowClose.innerHTML = "Upload Images on ibb.co";
-            //удаляем форму
-            //получаем блок в который чистим от полей
-            var objGroupDiv = document.getElementById('UploadForm');
-            if(objGroupDiv){
-                objGroupDiv.remove();
+        }else{
+            //ключ апи найден
+            objUserSettings = JSON.parse(obj.BVtoolsUserSettings);
+
+            if(buttonShowClose){ 
+                if(buttonShowClose.innerHTML == "Upload Images on ibb.co"){
+                    // заменить кнопку на кнопку закрытия если она открытие
+                    //переписываем кнопке имя
+                    buttonShowClose.innerHTML = "Close |X|";
+        
+                    //декларируем input для выбора фоток
+                    let strImagesInput = "<p class='My_lable'>Select images</p><input type='file' class='MyTextarea' id='objFiles' name='objFiles' accept='image/*' multiple>";
+                    //декларируем див для превьюх
+                    let strImagesPreviev = "<div class='MyPrevievs' id='objPrevievs'></div>";
+                    //декларируем кнопку "загрузить"
+                    let strButtonUpload = "<button class='my_button' id='startUpload'>Upload images</button>";
+                    //декларируем кнопку "удалить ключ апи"
+                    let strButtonRemoveApiKey = "<button class='my_button' id='removeApiKey'>Remove Api Key</button>";
+        
+                    //создать елемент для группы
+                    let objGroupDiv = document.createElement('div');
+                    objGroupDiv.className = 'UserForm';
+                    objGroupDiv.id = 'UploadForm';
+                    objGroupDiv.innerHTML = strImagesInput+strImagesPreviev+strButtonUpload+strButtonRemoveApiKey;
+        
+        
+                    //получаем блок в который вставим поля
+                    let objParentDiv = document.getElementById('ibbUploadForm');
+                    if(objParentDiv){
+                        objParentDiv.appendChild(objGroupDiv);
+                    }else{
+                        alert('нету блока для вставки полей');
+                    }
+
+                    //получаем кнопку загрузки изображениц если она есть для ее прослушивания
+                    let buttonStartUpload = document.getElementById('startUpload');
+                    if(buttonStartUpload){
+                        buttonStartUpload.addEventListener('click', uploadingFunc);
+                        document.querySelector('#objFiles').addEventListener("change", previewImages);
+                    }
+
+                    //получаем кнопку удаления ключа апи если она есть для прослушивания
+                    let buttonRemoveApiKey = document.getElementById('removeApiKey');
+                    if(buttonRemoveApiKey){
+                        buttonRemoveApiKey.addEventListener('click', ()=>{
+                            //спросить точно ли удалять
+                            if (confirm('Are you sure you want to remove your current Api Key?')) {
+                                //удаляем ключ апи
+                                chrome.storage.sync.remove(["BVtoolsUserSettings"], function() {
+                                    if (chrome.runtime.error) {
+                                        console.log("Runtime error.");
+                                    }
+                                });
+                                //закрыть окно расширения
+                                window.close();
+                            }
+                        });
+                    }
+                }else{// заменить кнопку на кнопку закрытия если она открытие
+                    //переписываем кнопке имя
+                    buttonShowClose.innerHTML = "Upload Images on ibb.co";
+                    //удаляем форму
+                    //получаем блок в который чистим от полей
+                    let objGroupDiv = document.getElementById('UploadForm');
+                    if(objGroupDiv){
+                        objGroupDiv.remove();
+                    }
+                }
             }
         }
-        //получаем кнопку загрузки изображениц если она есть для ее прослушивания
-        var buttonStartUpload = document.getElementById('startUpload');
-        if(buttonStartUpload){
-            buttonStartUpload.addEventListener('click', uploadingFunc);
-            document.querySelector('#objFiles').addEventListener("change", previewImages);
-        }
-    }
+    });
 }
 
 //функция которая грузит изображения на сервер и возвращает результатом ссылки
@@ -473,13 +581,13 @@ function uploadingFunc(){
         //удалить поле выбора и кнопку загрузки
         document.getElementById("objFiles").remove();
         document.getElementById("startUpload").remove();
+        document.getElementById("removeApiKey").remove();
     }else{
         alert("Please select images");
     }
 
     while (objImage != '' && objImage != undefined) {//если выбрано фото
         if(i == undefined){var i=0;}
-
         //старт загрузки изображения
         //создаем виртуальную форму
         var objForm = new FormData();
@@ -487,13 +595,20 @@ function uploadingFunc(){
         objForm.append("image", objImage);
         //настройки для формы
         var objSettings = {
-        "url": "https://api.imgbb.com/1/upload?key=54a35eba9688303736f7366aea5a3507",
+        "url": "https://api.imgbb.com/1/upload?key="+objUserSettings.strIbbApiKey,
         "method": "POST",
         "timeout": 0,
         "processData": false,
         "mimeType": "multipart/form-data",
         "contentType": false,
-        "data": objForm
+        "data": objForm,
+        "error": function (jqXHR, exception) {
+            if(jqXHR.status==400){
+                alert(`Invalid Ibb Api Key, load status - ${jqXHR.status}`);  
+            }else{
+                alert(`ERROR! Api request load status - ${jqXHR.status}`);    
+            }
+        }
         };
         //отправка формы и сохранение ссылки из ответа
         $.ajax(objSettings).done(function (response) {
@@ -550,14 +665,12 @@ function remDownloadGo(){
     if(buttonRemDownload){
         // заменить кнопку на кнопку закрытия если она открытие
         if(buttonRemDownload.innerHTML == "Download RemBG"){
-            //у нас есть доступ к вкладке хрома потому можно запустить chrome.tabs.executeScript:
-            chrome.tabs.executeScript({
-                code: '(' + startDownloading + ')();' //аргумент тут это строка но function.toString() вернет код функции
-            }, (results) => {
-                //Здесь у нас есть только innerHTML, а не структура DOM.
-                // console.log('Popup script:')
-                // console.log(results[0]);
+            //у нас есть доступ к вкладке хрома потому можно запустить chrome.scripting.executeScript:
+            chrome.scripting.executeScript({
+                target : {tabId : objActiveTab.id},
+                func : startDownloading
             });
+
             //закрыть окно расширения
             window.close();
 
@@ -596,7 +709,7 @@ function remDownloadGo(){
                 strResult+="<br>"+strLincks;
 
                 //создать елемент для группы
-                var objGroupDiv = document.createElement('div');
+                let objGroupDiv = document.createElement('div');
                 objGroupDiv.id = 'UserForm1122';
                 objGroupDiv.innerHTML = "<div style='position: fixed;z-index: 1;padding-top: 100px;left: 0;top: 0;width: 100%;height: 100%;overflow: auto;background-color: rgb(0,0,0);background-color: rgba(0,0,0,0.4);'><div style='background-color: #fefefe;margin: auto;padding: 20px;border: 1px solid #888;width: 80%;text-align: center;'>"+strResult+"</div></div>";
                 objBody = document.body;
