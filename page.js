@@ -108,7 +108,7 @@ function addImageNode(container, url, index) {
 
 /**
  * Функция скачивания изображения
- * 
+ *  
  * @param {} url - ссилока на изображение
  * @param {} fileName - название для изображения
  * @param {} id - номер вкладки для ее закрытия
