@@ -33,7 +33,7 @@ function getFileInfo(strLink, strName=false){
 
     if(strName!==false){
         //если формата в названии нет или он не такой как у исходника то доклеиваем формат
-        if(!strName.match(strRegEx) || strName.match(strRegEx)[0] != strFormat){
+        if(!strName.match(strRegEx) || strName.match(strRegEx)[0] != objFileInfo.strFormat){
             objFileInfo.strName = strName;
         }else{
             //если имя било передано с форматом вместе то отрезать формат от имени и поставить тот что у файла
@@ -81,7 +81,68 @@ function addImageNode(container, url, index) {
     checkbox.setAttribute("url",url);
     checkbox.setAttribute("filename",objFile.strName);
     div.appendChild(checkbox);
+    const download = document.createElement("button");
+    download.type = "button";
+    download.innerHTML = "download";
+    download.addEventListener("click",()=>{
+        chrome.tabs.create(
+            {"url": url,active:false},(tab) => {
+                // * Передать наш массив `urls` на новую вкладку
+                setTimeout(()=>{
+                    // передаст джава скрипт на страницу 
+                    // вернет результат виполнения данного джаваскрипта
+                    chrome.scripting.executeScript({
+                        target: {tabId: tab.id},
+                        func: forceDownload,
+                        args: [url, objFile.strName+objFile.strFormat, tab.id]
+                    },
+                        closeBrowserTab
+                    );
+                },500);
+            }
+        );
+    });
+    div.appendChild(download);
     container.appendChild(div);
+}
+
+/**
+ * Функция скачивания изображения
+ * 
+ * @param {} url - ссилока на изображение
+ * @param {} fileName - название для изображения
+ * @param {} id - номер вкладки для ее закрытия
+ */
+function forceDownload(url, fileName, id=false){
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.responseType = "blob";
+    xhr.onload = function(){
+        var urlCreator = window.URL || window.webkitURL;
+        var imageUrl = urlCreator.createObjectURL(this.response);
+        var tag = document.createElement('a');
+        tag.href = imageUrl;
+        tag.download = fileName;
+        document.body.appendChild(tag);
+        tag.click();
+        document.body.removeChild(tag);
+    }
+    xhr.send();
+    if(id){return id;};
+}
+
+/**
+ * Функция закроет вкладку на с которой завершили скачивание
+ * 
+ * @param {} id - номер вкладки для ее закрытия
+ */
+function closeBrowserTab(id=false){
+    if(id){
+        id=id[0].result*1;
+        setTimeout(()=>{
+            chrome.tabs.remove(id);
+        },500,id);
+    }
 }
 
 /**
