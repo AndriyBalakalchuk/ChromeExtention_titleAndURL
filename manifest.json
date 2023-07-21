@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "BVStud.io tools",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "description": "Copy curent page title and URL (Копирует тайтл и ссылку на текущую страницу в буфер), Also, adds a possibility to batch download images by adding names for them (Также добавлена возможность пакетной загрузки изображений, добавляя для них имена.)",
     "action": {
       "default_icon": "icon.png",

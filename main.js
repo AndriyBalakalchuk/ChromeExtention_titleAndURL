@@ -111,10 +111,6 @@ function downloadingFunc(){
     var arrLinks = Array();
     //переменная для массива имен
     var arrNames = Array();
-    //переменная для одной ссылки
-    var strLink = '';
-    //переменная для одного имени
-    var strName = '';
     //регулярное выражение проверки формата
     var strRegEx = /.jpeg$|.jpg$|.png$|.gif$/i;
     var strNameRegEx = /[^\/]*.(jpeg$|.jpg$|.png$|.gif$)/i;
@@ -134,57 +130,28 @@ function downloadingFunc(){
         if(strDirtyLinks.indexOf("\n")!=-1){
             arrLinks = strDirtyLinks.split("\n");
         }else{
-            strLink = strDirtyLinks;
+            arrLinks.push(strDirtyLinks);
         }
         if(strDirtyNames && strDirtyNames.indexOf("\n")!=-1){
             arrNames = strDirtyNames.split("\n");
         }else{
-            strName = strDirtyNames;
+            arrNames.push(strDirtyNames);
         }
         //проверить окончания для всех переданных ссылок и работать только с теми которые заканчиваются на формат изображения
-        if(strLink == ''){ //пришло много ссылок
+        if(arrLinks.length>0){ //пришло много ссылок
             //идем по всем ссылкам и формируем чистый массив ссылок и имен к ним  
             for (var i=0; i<arrLinks.length; i++) {
                 if(arrLinks[i].match(strRegEx)){//ссылка верна
                     //сохраняем ссылку так как она верна
                     arrClearedLinks.push(arrLinks[i]);
-                    // получаем формат исходного изображения
-                    var strFormat = arrLinks[i].match(strRegEx)[0];
-                    // ссылка верна, нужно скачать Но смотрим есть ли имя
-                    if(arrNames[i]!=undefined && arrNames[i]!=""){
-                        //если формата в названии нет или он не такой как у исходника то доклеиваем формат
-                        if(!arrNames[i].match(strRegEx)){arrNames[i] = arrNames[i]+strFormat;
-                        }else if(arrNames[i].match(strRegEx)[0] != strFormat){arrNames[i] = arrNames[i]+strFormat;}
-                        arrClearedNames.push(arrNames[i]);
-                    }else{ //имени нету - получаем его из файла
-                        var strFileNameFromLink = arrLinks[i].match(strNameRegEx)[0];
-                        //если файл содержит -removebg-preview то заменить на пустоту
-                        strFileNameFromLink = strFileNameFromLink.replace(/-removebg-preview/,"");
-                        arrClearedNames.push(strFileNameFromLink);
-                    }
+                    arrClearedNames.push(arrNames[i]!=undefined?arrNames[i]:false);
                 }
-            }
-        }else{ //пришла одна ссылка
-            if(strLink.match(strRegEx)){//ссылка верна
-                // получаем формат исходного изображения
-                var strFormat = strLink.match(strRegEx)[0];
-                // alert(strFormat);
-                // ссылка верна, нужно скачать Но смотрим есть ли имя
-                if(strName){
-                    //если формата в названии нет или он не такой как у исходника то доклеиваем формат
-                    if(!strName.match(strRegEx) || strName.match(strRegEx)[0] != strFormat){strName = strName+strFormat;}
-                    forceDownload(strLink, strName)
-                }else{ //имени нету - получаем его из файла
-                    var strFileNameFromLink = strLink.match(strNameRegEx)[0];
-                    //если файл содержит -removebg-preview то заменить на пустоту
-                    strFileNameFromLink = strFileNameFromLink.replace(/-removebg-preview/,"");
-                    forceDownload(strLink, strFileNameFromLink)
-                }
-            }else{ //ссылка не верна
-                alert("Incorrect link, supported links ended on .jpg, .jpeg, .png, .gif");
             }
         }
 
+        openImagesPage(arrClearedLinks, arrClearedNames);
+
+        return;
         //показываем прогресс бар
         //получаем кнопку открывшую форму для скачивания изображений для ее прослушивания
         var buttonShowDownlForm = document.getElementById('showDownload');
