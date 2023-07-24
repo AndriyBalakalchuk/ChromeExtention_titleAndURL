@@ -45,7 +45,7 @@ body {
     height:20px;
 }
 
-.header > button {
+.header > div > button {
     color:rgb(0, 0, 0);
     background:linear-gradient(#ffffff, #6f6b80);
     border-width:0px;
@@ -57,7 +57,7 @@ body {
     font-size:16px;
 }
 
-.header > button:hover {
+.header > div > button:hover {
     background:linear-gradient(#f4f8ec, #5b576a);
     box-shadow: 2px 2px #00000066;
 }

@@ -1,4 +1,5 @@
 let arrGetgNames = [];
+let objBlobCollection = {intSanded:0,intDone:0,arrCollection:[]};
 /**
  * Ждем пересилку массива изображений от основного скрипта
  * URL's и передаєм в отображение
@@ -88,16 +89,24 @@ function addImageNode(container, url, index) {
         chrome.tabs.create(
             {"url": url,active:false},(tab) => {
                 // * Передать наш массив `urls` на новую вкладку
-                setTimeout(()=>{
+                setTimeout(async ()=>{
                     // передаст джава скрипт на страницу 
                     // вернет результат виполнения данного джаваскрипта
-                    chrome.scripting.executeScript({
-                        target: {tabId: tab.id},
-                        func: forceDownload,
-                        args: [url, objFile.strName+objFile.strFormat, tab.id]
-                    },
-                        closeBrowserTab
-                    );
+                    try{
+                        await chrome.scripting.executeScript({
+                            target: {tabId: tab.id},
+                            func: forceDownload,
+                            args: [url, objFile.strName+objFile.strFormat, false]
+                        }).then(setTimeout(async ()=>{
+                            try{
+                                await chrome.tabs.remove(tab.id);
+                            }catch (error){
+                                console.log(error);
+                            }
+                        },500,tab.id));
+                    }catch (error){
+                        console.log(error);
+                    }
                 },500);
             }
         );
@@ -111,37 +120,41 @@ function addImageNode(container, url, index) {
  *  
  * @param {} url - ссилока на изображение
  * @param {} fileName - название для изображения
- * @param {} id - номер вкладки для ее закрытия
+ * @param {} blob - если стоит тру то вместо скаивания картинки функция вернет блоб картинки в основную функцию
  */
-function forceDownload(url, fileName, id=false){
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
-    xhr.responseType = "blob";
-    xhr.onload = function(){
-        var urlCreator = window.URL || window.webkitURL;
-        var imageUrl = urlCreator.createObjectURL(this.response);
-        var tag = document.createElement('a');
-        tag.href = imageUrl;
-        tag.download = fileName;
-        document.body.appendChild(tag);
-        tag.click();
-        document.body.removeChild(tag);
-    }
-    xhr.send();
-    if(id){return id;};
-}
+async function forceDownload(url, fileName, blob=false){
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        //получили блоб
+        const data = await response.blob();
+        if(blob){
+            //зарпрос на блоб
+            function blobToBase64(blob) {
+                return new Promise((resolve, _) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+            }
 
-/**
- * Функция закроет вкладку на с которой завершили скачивание
- * 
- * @param {} id - номер вкладки для ее закрытия
- */
-function closeBrowserTab(id=false){
-    if(id){
-        id=id[0].result*1;
-        setTimeout(()=>{
-            chrome.tabs.remove(id);
-        },500,id);
+            return await blobToBase64(data);
+        }else{
+            //запрос на скачивание
+            var urlCreator = window.URL || window.webkitURL;
+            var imageUrl = urlCreator.createObjectURL(data);
+            var tag = document.createElement('a');
+            tag.href = imageUrl;
+            tag.download = fileName;
+            document.body.appendChild(tag);
+            tag.click();
+            document.body.removeChild(tag);
+            return "done";
+        }
+    } catch (error) {
+        return error;
     }
 }
 
@@ -158,21 +171,20 @@ document.getElementById("selectAll")
 });
 
 /**
- * "Download" кнопка "onClick" просшивание
+ * "Download" кнопка "onClick" прослушивание
  * складивает отмеченные изображения в ZIP-архив
  * потом его скачивает
  */
-document.getElementById("downloadBtn")
-        .addEventListener("click", async() => {
-            try {
-                const urls = getSelectedUrls();
-                const names = getSelectedNames();
-                const archive = await createArchive(urls, names);
-                downloadArchive(archive);
-            } catch (err) {
-                alert(err.message)
-            }
-        })
+document.getElementById("downloadBtn").addEventListener("click", async() => {
+    try {
+        const urls = getSelectedUrls();
+        const names = getSelectedNames();
+        const archive = await createArchive(urls, names);
+        downloadArchive(archive);
+    } catch (err) {
+        alert(err.message)
+    }
+});
 
 /**
  * функция получит отмеченные галочками юриели изображений
@@ -269,3 +281,122 @@ function downloadArchive(archive) {
     window.URL.revokeObjectURL(link.href);
     document.body.removeChild(link);
 }
+
+
+/**
+ * "cors-downloadBtn" кнопка "onClick" прослушивание
+ * складивает отмеченные изображения в ZIP-архив
+ * потом его скачивает (для игнорировани источника будет открывать каждое изобраение в отдельной вкладке перед тем как добавить его в архив)
+ */
+document.getElementById("cors-downloadBtn").addEventListener("click", async() => {
+    try {
+        const urls = getSelectedUrls();
+        const names = getSelectedNames();
+        const blobs = collectImageBlobs(urls, names);
+    } catch (err) {
+        alert(err.message)
+    }
+});
+
+/**
+ * Функция собирает данние изображений которые были отмечены на странице для скачивания
+ * 
+ * @param {} urls - массив ссилок на изображения
+ * @param {} names - массив названий для изображений
+ * @returns массив блобов изображений переданных по ссылкам
+ */
+async function collectImageBlobs(urls, names) {
+    let arrBlobs = [];
+    //создаем глобальный массив ожидания
+    objBlobCollection.intSanded = urls.length;
+    objBlobCollection.intDone = 0;
+    objBlobCollection.arrCollection = [];
+
+    for (let i=0;i<urls.length; i++) {
+        //идем по всем отмеченным ссилкам
+        chrome.tabs.create(
+            {"url": urls[i],active:false},(tab) => {
+                // * Передать наш массив `urls` на новую вкладку
+                setTimeout(async ()=>{
+                    // передаст джава скрипт на страницу 
+                    // вернет результат виполнения данного джаваскрипта
+                    try{
+                        await chrome.scripting.executeScript({
+                            target: {tabId: tab.id},
+                            func: forceDownload,
+                            args: [urls[i], "", true]
+                        }).then(injectionResults => {
+                            for (const {frameId, result} of injectionResults) {
+                                closeCollectAndCloseBrowserTab(tab.id, result, names);
+                            }
+                        });
+                    }catch (error){
+                        console.log(error);
+                    }
+                },500);
+            }
+        );
+    }
+
+
+    return arrBlobs;
+}
+
+/**
+ * Функция закроет вкладку на с которой завершили скачивание
+ * 
+ * @param {} id - номер вкладки для ее закрытия
+ * @param {} result - блоб картинки на данной вкладке
+ * @param {} names - массив названий для изображений
+ */
+async function closeCollectAndCloseBrowserTab(id,result,names){
+    //принять новый ответ
+    let request = await fetch(result);
+    let blob = await request.blob();
+    objBlobCollection.arrCollection.push(blob);
+    objBlobCollection.intDone++;
+    //закрыть эту вкладку
+    setTimeout(async ()=>{
+        try{
+            await chrome.tabs.remove(id);
+        }catch (error){
+            console.log(error);
+        }
+    },500,id);
+
+    if(objBlobCollection.intSanded == objBlobCollection.intDone){
+        //если вернулись все то передаем в архиватор
+        const archive = await createArchiveFromBlobs(objBlobCollection.arrCollection, names);
+        downloadArchive(archive);
+    }
+}
+
+
+/**
+ * Функция создания массива из переданных изображений (игнорируя источник изображения)
+ * 
+ * @param {} blobs - массив с данними изображений
+ * @param {} names - массив названий для изображений
+ * @returns блоб для создания массива
+ */
+async function createArchiveFromBlobs(blobs, names) {
+    const zip = new JSZip();
+    for (let index in blobs) {
+        try {
+            const blob = blobs[index];
+            zip.file(checkAndGetFileName(index, blob, names),blob);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+    return zip.generateAsync({
+        type:'blob',
+        compression: "DEFLATE",
+        compressionOptions: {
+            level: 9
+        }
+    });
+}
+
+
+
