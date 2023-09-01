@@ -364,7 +364,8 @@ function copyManipulations(){
                     try {
                         var successful = document.execCommand('copy');
                         if(successful) {
-                            aField.setAttribute("hidden", true);
+                            // aField.setAttribute("hidden", true);
+                            aField.remove();
                         }
                         var msg = successful ? 'successful' : 'unsuccessful';
                         console.log('Copying text command was ' + msg);
