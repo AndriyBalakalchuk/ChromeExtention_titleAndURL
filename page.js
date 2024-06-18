@@ -16,8 +16,8 @@ chrome.runtime.onMessage
 /**
  * регулярное выражение проверки формата и имени для изображений
  */
-const strRegEx = /.jpeg$|.jpg$|.png$|.gif$/i;
-const strNameRegEx = /[^\/]*.(jpeg$|.jpg$|.png$|.gif$)/i;
+const strRegEx = /.jpeg$|.jpg$|.png$|.gif$|.svg$/i;
+const strNameRegEx = /[^\/]*.(jpeg$|.jpg$|.png$|.gif$|.svg$)/i;
 
 /**
  * Функция получит имя и формат для файла исходя из переданного в нее юрл если передать еще и имя то вообще супер

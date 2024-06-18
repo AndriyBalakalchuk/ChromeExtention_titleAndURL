@@ -55,7 +55,7 @@ function showDownForm(){
             buttonShowDownlForm.innerHTML = "Close form |X|";
 
             //декларируем текстовое поле для ссылок
-            var strTextAreaLinks = "<p class='My_lable'>Add links here* (.jpg, .png, .gif at the end)</p><textarea class='MyTextarea' id='LinksImages'></textarea>";
+            var strTextAreaLinks = "<p class='My_lable'>Add links here* (.jpg, .png, .gif, .svg at the end)</p><textarea class='MyTextarea' id='LinksImages'></textarea>";
             //декларируем текстовое поле для названий
             var strTextAreaNames = "<p class='My_lable'>Add names here (/n for every new)</p><textarea class='MyTextarea' id='NamesImages'></textarea>";
             //декларируем кнопку "скачать"
@@ -112,8 +112,8 @@ function downloadingFunc(){
     //переменная для массива имен
     var arrNames = Array();
     //регулярное выражение проверки формата
-    var strRegEx = /.jpeg$|.jpg$|.png$|.gif$/i;
-    var strNameRegEx = /[^\/]*.(jpeg$|.jpg$|.png$|.gif$)/i;
+    var strRegEx = /.jpeg$|.jpg$|.png$|.gif$|.svg$/i;
+    var strNameRegEx = /[^\/]*.(jpeg$|.jpg$|.png$|.gif$|.svg$)/i;
     //переменная для чистого массива ссылок
     var arrClearedLinks = Array();
     //переменная для чистого массива имен
