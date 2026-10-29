@@ -330,49 +330,25 @@ function copyManipulations(){
                 //запрашиваем примечание от юзера
                 var strDescriptionFromUser = document.getElementById('strUserDescription').value;
                 if(strDescriptionFromUser=="" || strDescriptionFromUser==null){strDescriptionFromUser='';}else{strDescriptionFromUser=" ("+strDescriptionFromUser.replace(/\n/gm, "★")+")";}
-                //закрыть окно расширения
-                window.close();
 
-                //у нас есть доступ к вкладке хрома потому можно запустить chrome.scripting.executeScript:
-                chrome.scripting.executeScript({
-                    target : {tabId : objActiveTab.id},
-                    func : copyURLandTitle,
-                    args : [strDescriptionFromUser,document.getElementById('strSystem').value],
+                var arrSystem = JSON.parse(document.getElementById('strSystem').value);
+                //получаем URL страници
+                var strURL = arrSystem[0];
+                //получаем тайтл вкладки
+                var strDirtyFolder = arrSystem[1];
+                //пробуем очистить тайтл от гугловского шаблона
+                strDirtyFolder = strDirtyFolder.replace(" - Service Desk", "");
+                strDirtyFolder = strDirtyFolder.replace(/...Google Диск/, "");
+                //собираем строку для копирования
+                var strTextToCopy = strDirtyFolder+strDescriptionFromUser.replace(/★/gm, "\n")+": \n"+strURL;
+
+                //копируем прямо из попапа (он в фокусе и клик дает user activation),
+                //а окно закрываем только после того как копирование завершилось
+                navigator.clipboard.writeText(strTextToCopy).then(()=>{
+                    window.close();
+                }).catch((err)=>{
+                    alert('Unable to copy: ' + err);
                 });
-            
-                //функция js которая отработает на выбранной вкладке
-                function copyURLandTitle(strDescriptionFromUser,strSystem){
-                    var arrSystem = JSON.parse(strSystem);
-                    //получаем URL страници 
-                    // var strURL = document.URL;
-                    var strURL = arrSystem[0];
-                    //получаем тайтл вкладки 
-                    // var strDirtyFolder = document.title;
-                    var strDirtyFolder = arrSystem[1];
-                    //пробуем очистить тайтл от гугловского шаблона
-                    strDirtyFolder = strDirtyFolder.replace(" - Service Desk", "");
-                    strDirtyFolder = strDirtyFolder.replace(/...Google Диск/, "");
-                    //собираем строку для копирования
-                    var strTextToCopy = strDirtyFolder+strDescriptionFromUser.replace(/★/gm, "\n")+": \n"+strURL;
-                    //создать фейк поле для копирования
-                    var aField = document.createElement("textarea");
-                    var div = document.getElementsByTagName("body")[0];
-                    div.appendChild(aField);
-                    aField.value = strTextToCopy;
-                    aField.select();
-                    //копировать содержимое фейк поля и удалить само поле
-                    try {
-                        var successful = document.execCommand('copy');
-                        if(successful) {
-                            // aField.setAttribute("hidden", true);
-                            aField.remove();
-                        }
-                        var msg = successful ? 'successful' : 'unsuccessful';
-                        console.log('Copying text command was ' + msg);
-                    } catch (err) {
-                        console.log('Oops, unable to copy');
-                    }
-                }
             });
         }
     }
